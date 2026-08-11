@@ -9,6 +9,6 @@ window.DISTRICTS = [
 ["57","Dinajpur","দিনাজপুর","Rangpur"],["58","Gaibandha","গাইবান্ধা","Rangpur"],["59","Kurigram","কুড়িগ্রাম","Rangpur"],["60","Lalmonirhat","লালমনিরহাট","Rangpur"],["61","Nilphamari","নীলফামারী","Rangpur"],["62","Panchagarh","পঞ্চগড়","Rangpur"],["63","Rangpur","রংপুর","Rangpur"],["64","Thakurgaon","ঠাকুরগাঁও","Rangpur"]
 ].map(d=>({id:d[0],name:d[1],bn:d[2],division:d[3],slug:d[1].toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}));
 
-window.GEOJSON_URL = "https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/main/src/data/bangladesh.geojson";
+window.GEOJSON_URL = "https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/master/src/data/bangladesh.geojson";
 window.STORAGE_KEY = "ourTravelDiary.v3";
 window.defaultTrips = [];

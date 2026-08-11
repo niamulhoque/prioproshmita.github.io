@@ -10,51 +10,102 @@ function photoMarkup(t,cls=""){return t.photos?.[0]?`<img class="${cls}" src="${
 async function buildMap(){
  const svg=$("#bdMap"); if(!svg) return;
  try{
-   const res=await fetch(GEOJSON_URL); if(!res.ok) throw Error("GeoJSON failed");
-   const geo=await res.json(); const features=geo.features||[];
-   const polys=features.filter(f=>f.geometry && ["Polygon","MultiPolygon"].includes(f.geometry.type));
-   if(!polys.length) throw Error("No polygons");
-   // fit all polygons to a stable SVG viewport
+   const res=await fetch(GEOJSON_URL);
+   if(!res.ok) throw Error("GeoJSON failed");
+   const geo=await res.json();
+   const features=(geo.features||[]).filter(f=>f.geometry && ["Polygon","MultiPolygon"].includes(f.geometry.type));
+   if(features.length<60) throw Error("District boundary data incomplete");
+
    let minX=999,maxX=-999,minY=999,maxY=-999;
-   const rings=[];
-   const pushRing=ring=>{const pts=ring.map(([x,y])=>{minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);return [x,y]});return pts};
-   polys.forEach(f=>{const g=f.geometry; if(g.type==="Polygon") rings.push({f,rings:g.coordinates.map(pushRing)}); else rings.push({f,rings:g.coordinates.flatMap(p=>p.map(pushRing))})});
-   const pad=20, W=700,H=800, scale=Math.min((W-pad*2)/(maxX-minX),(H-pad*2)/(maxY-minY));
-   const sx=x=>pad+(x-minX)*scale, sy=y=>H-(pad+(y-minY)*scale);
+   const allRings=[];
+   const collect=(rings)=>{
+     rings.forEach(r=>r.forEach(([x,y])=>{
+       minX=Math.min(minX,x); maxX=Math.max(maxX,x);
+       minY=Math.min(minY,y); maxY=Math.max(maxY,y);
+     }));
+   };
+   features.forEach(f=>{
+     const g=f.geometry;
+     if(g.type==="Polygon"){ collect(g.coordinates); allRings.push({f,rings:g.coordinates}); }
+     else { g.coordinates.forEach(poly=>{collect(poly); allRings.push({f,rings:poly});}); }
+   });
+
+   const pad=38,W=700,H=820;
+   const scale=Math.min((W-pad*2)/(maxX-minX),(H-pad*2)/(maxY-minY));
+   const sx=x=>pad+(x-minX)*scale;
+   const sy=y=>H-(pad+(y-minY)*scale);
    const visited=visitedSet();
    const frag=document.createDocumentFragment();
-   polys.forEach(f=>{
-     const p=f.properties||{}; const name=p.name||p.NAME||p.district||p.DISTRICT||p.dt_name||p.district_name||"District";
-     const bn=p.bn_name||p.BN_NAME||"";
+
+   features.forEach(f=>{
+     const p=f.properties||{};
+     const name=p.shapeName||p.shape_name||p.name||p.NAME||p.district||p.DISTRICT||p.dt_name||p.district_name||"District";
+     const bn=p.bn_name||p.BN_NAME||p.shapeNameBn||p.shapeNameBN||"";
      const match=districtByName(name,bn);
-     const slug=match?.slug||name.toLowerCase().replace(/[^a-z0-9]+/g,"-");
+     const slug=match?.slug||String(name).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
      const id=match?.id;
-     const coords=f.geometry.type==="Polygon"?f.geometry.coordinates:[].concat(...f.geometry.coordinates);
-     const d=coords.map(r=>r.map(([x,y])=>`${r===coords[0]?"M":"M"}${sx(x).toFixed(2)},${sy(y).toFixed(2)} L`).join("").replace(/ L$/,"")).join(" ");
-     // Above creates separate M/L sequences; simpler path generation:
-     const pathD=coords.map(r=>r.map(([x,y],i)=>`${i?"L":"M"}${sx(x).toFixed(2)},${sy(y).toFixed(2)}`).join(" ")+" Z").join(" ");
+     const polygons=f.geometry.type==="Polygon"? [f.geometry.coordinates] : f.geometry.coordinates;
+     const pathD=polygons.flatMap(poly=>poly.map(r=>r.map(([x,y],i)=>`${i?"L":"M"}${sx(x).toFixed(2)},${sy(y).toFixed(2)}`).join(" ")+" Z")).join(" ");
      const path=document.createElementNS("http://www.w3.org/2000/svg","path");
-     path.setAttribute("d",pathD); path.classList.add("district"); if(id&&visited.has(id)) path.classList.add("visited");
-     path.dataset.slug=slug; path.dataset.name=name; path.dataset.bn=bn;
-     path.addEventListener("mousemove",e=>showTip(e,`${name}${bn?" • "+bn:""}${id&&visited.has(id)?" · ✓ Visited":""}`));
-     path.addEventListener("mouseleave",hideTip);
+     path.setAttribute("d",pathD);
+     path.classList.add("district");
+     if(id&&visited.has(id)) path.classList.add("visited");
+     path.dataset.slug=slug; path.dataset.name=name; path.dataset.bn=bn; path.dataset.id=id||"";
+     const label=match?`${match.name} • ${match.bn}`:name;
+     path.setAttribute("aria-label",label);
+     // Native browser tooltip: always shows the district name on hover.
+     const title=document.createElementNS("http://www.w3.org/2000/svg","title");
+     title.textContent=label + (id&&visited.has(id) ? " — ✓ Visited" : "");
+     path.appendChild(title);
+     path.addEventListener("mouseenter",e=>{path.classList.add("hovered"); showDistrictCard(match,name,bn,id&&visited.has(id),e);});
+     path.addEventListener("mousemove",e=>showDistrictCard(match,name,bn,id&&visited.has(id),e));
+     path.addEventListener("mouseleave",()=>{path.classList.remove("hovered"); hideDistrictCard();});
      path.addEventListener("click",()=>location.href=`district.html?district=${encodeURIComponent(slug)}`);
      frag.appendChild(path);
    });
-   svg.innerHTML=""; svg.appendChild(frag); $("#mapLoading")?.classList.add("hidden");
-   renderLabels(svg);
+
+   svg.innerHTML="";
+   svg.appendChild(frag);
+   $("#mapLoading")?.classList.add("hidden");
+   renderVisitedLabels(svg);
+   renderDistrictDirectory();
  }catch(e){
-   $("#mapLoading").innerHTML=`<div style="max-width:420px;text-align:center;padding:20px"><h3>Map data could not load</h3><p style="color:#6d7b72">Please connect to the internet once. The boundary file is loaded from the open-source Bangladesh GeoJSON project.</p><a class="btn primary" href="index.html">Retry</a></div>`;
+   console.error(e);
+   $("#mapLoading").innerHTML=`<div style="max-width:420px;text-align:center;padding:20px"><h3>Map data could not load</h3><p style="color:#6d7b72">The district boundary service could not be reached. Check your internet connection and try again.</p><button class="btn primary" onclick="location.reload()">Retry</button></div>`;
  }
 }
 function districtByName(en,bn){return DISTRICTS.find(d=>d.name.toLowerCase()===String(en).toLowerCase()||d.bn===bn||d.name.toLowerCase().replace(/[^a-z]/g,"")===String(en).toLowerCase().replace(/[^a-z]/g,""))}
-function renderLabels(svg){
- // Labels are intentionally lightweight; polygon centroids are calculated in browser.
- [...svg.querySelectorAll("path.district")].forEach(p=>{
-   const bb=p.getBBox(); const text=document.createElementNS("http://www.w3.org/2000/svg","text");
-   text.setAttribute("x",bb.x+bb.width/2);text.setAttribute("y",bb.y+bb.height/2);text.setAttribute("class","map-label");
-   text.textContent=(p.dataset.name||"").slice(0,13); svg.appendChild(text);
- });
+function renderVisitedLabels(svg){
+  [...svg.querySelectorAll("path.district.visited")].forEach(p=>{
+    const bb=p.getBBox();
+    const text=document.createElementNS("http://www.w3.org/2000/svg","text");
+    text.setAttribute("x",bb.x+bb.width/2);
+    text.setAttribute("y",bb.y+bb.height/2);
+    text.setAttribute("class","map-label visited-label");
+    text.textContent=(p.dataset.name||"").replace(/ District$/i,"");
+    svg.appendChild(text);
+  });
+}
+function showDistrictCard(match,name,bn,isVisited,e){
+  const box=$("#districtHoverCard"); if(!box)return;
+  const en=match?.name||name;
+  const bangla=match?.bn||bn||"";
+  box.innerHTML=`<strong>${escapeHtml(en)}</strong>${bangla?`<span>${escapeHtml(bangla)}</span>`:""}<small>${isVisited?"✓ Visited":"Not visited"} • Click to open story</small>`;
+  if(e){
+    const shell=box.parentElement.getBoundingClientRect();
+    let x=e.clientX-shell.left+16, y=e.clientY-shell.top+16;
+    const maxX=shell.width-box.offsetWidth-12;
+    const maxY=shell.height-box.offsetHeight-12;
+    box.style.left=Math.max(12,Math.min(x,maxX))+"px";
+    box.style.top=Math.max(12,Math.min(y,maxY))+"px";
+  }
+  box.classList.add("show");
+}
+function hideDistrictCard(){$("#districtHoverCard")?.classList.remove("show")}
+function renderDistrictDirectory(){
+  const grid=$("#districtDirectory"); if(!grid)return;
+  const visited=visitedSet();
+  grid.innerHTML=DISTRICTS.map(d=>`<a class="district-chip ${visited.has(d.id)?"visited":""}" data-id="${d.id}" data-search="${escapeHtml((d.name+" "+d.bn).toLowerCase())}" href="district.html?district=${encodeURIComponent(d.slug)}"><span>${escapeHtml(d.name)}</span><small>${escapeHtml(d.bn)}</small>${visited.has(d.id)?'<b>✓</b>':""}</a>`).join("");
 }
 function showTip(e,txt){const t=$("#tooltip");if(!t)return;t.textContent=txt;t.style.display="block";const r=$("#map")?.getBoundingClientRect();t.style.left=(e.clientX-r.left+12)+"px";t.style.top=(e.clientY-r.top+12)+"px"}
 function hideTip(){$("#tooltip")?.style&&($("#tooltip").style.display="none")}
@@ -67,7 +118,15 @@ function updateStats(){
  grid.innerHTML=trips.slice().reverse().slice(0,6).map(t=>{const d=DISTRICTS.find(x=>x.id===t.districtId);return `<article class="trip-card"><div class="trip-photo">${photoMarkup(t)}</div><div class="trip-card-body"><div class="trip-meta">${escapeHtml(d?.name||"District")} • ${escapeHtml(t.date||"")}</div><h3>${escapeHtml(t.title)}</h3><p>${escapeHtml(t.summary||"A memory from our journey.")}</p><a class="text-link" href="district.html?district=${encodeURIComponent(d?.slug||"")}">Read story →</a></div></article>`}).join("");
 }
 function searchMap(){
- const q=($("#districtSearch")?.value||"").toLowerCase().trim();document.querySelectorAll(".district").forEach(p=>{const hit=!q||p.dataset.name.toLowerCase().includes(q)||p.dataset.bn.includes(q);p.classList.toggle("dim",!hit)});
+ const q=($("#districtSearch")?.value||"").toLowerCase().trim();
+ document.querySelectorAll(".district").forEach(p=>{
+   const hay=(p.dataset.name+" "+p.dataset.bn).toLowerCase();
+   p.classList.toggle("dim",!!q&&!hay.includes(q));
+   p.classList.toggle("search-hit",!!q&&hay.includes(q));
+ });
+ document.querySelectorAll(".district-chip").forEach(c=>{
+   c.classList.toggle("search-hidden",!!q&&!c.dataset.search.includes(q));
+ });
 }
 function initDistrict(){
  const el=$("#districtPage");if(!el)return;const slug=new URLSearchParams(location.search).get("district")||"";const d=districtBySlug(slug);

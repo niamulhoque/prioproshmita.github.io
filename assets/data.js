@@ -1,0 +1,14 @@
+window.DISTRICTS = [
+["1","Dhaka","ঢাকা","Dhaka"],["2","Faridpur","ফরিদপুর","Dhaka"],["3","Gazipur","গাজীপুর","Dhaka"],["4","Gopalganj","গোপালগঞ্জ","Dhaka"],["5","Kishoreganj","কিশোরগঞ্জ","Dhaka"],["6","Madaripur","মাদারীপুর","Dhaka"],["7","Manikganj","মানিকগঞ্জ","Dhaka"],["8","Munshiganj","মুন্সিগঞ্জ","Dhaka"],["9","Narayanganj","নারায়ণগঞ্জ","Dhaka"],["10","Narsingdi","নরসিংদী","Dhaka"],["11","Rajbari","রাজবাড়ী","Dhaka"],["12","Shariatpur","শরীয়তপুর","Dhaka"],["13","Tangail","টাঙ্গাইল","Dhaka"],
+["14","Bogra","বগুড়া","Rajshahi"],["15","Joypurhat","জয়পুরহাট","Rajshahi"],["16","Naogaon","নওগাঁ","Rajshahi"],["17","Natore","নাটোর","Rajshahi"],["18","Chapainawabganj","চাঁপাইনবাবগঞ্জ","Rajshahi"],["19","Pabna","পাবনা","Rajshahi"],["20","Rajshahi","রাজশাহী","Rajshahi"],["21","Sirajganj","সিরাজগঞ্জ","Rajshahi"],
+["22","Barguna","বরগুনা","Barisal"],["23","Barisal","বরিশাল","Barisal"],["24","Bhola","ভোলা","Barisal"],["25","Jhalokati","ঝালকাঠি","Barisal"],["26","Patuakhali","পটুয়াখালী","Barisal"],["27","Pirojpur","পিরোজপুর","Barisal"],
+["28","Bandarban","বান্দরবান","Chattogram"],["29","Brahmanbaria","ব্রাহ্মণবাড়িয়া","Chattogram"],["30","Chandpur","চাঁদপুর","Chattogram"],["31","Chattogram","চট্টগ্রাম","Chattogram"],["32","Cumilla","কুমিল্লা","Chattogram"],["33","Cox's Bazar","কক্সবাজার","Chattogram"],["34","Feni","ফেনী","Chattogram"],["35","Khagrachhari","খাগড়াছড়ি","Chattogram"],["36","Lakshmipur","লক্ষ্মীপুর","Chattogram"],["37","Noakhali","নোয়াখালী","Chattogram"],["38","Rangamati","রাঙ্গামাটি","Chattogram"],
+["39","Habiganj","হবিগঞ্জ","Sylhet"],["40","Moulvibazar","মৌলভীবাজার","Sylhet"],["41","Sunamganj","সুনামগঞ্জ","Sylhet"],["42","Sylhet","সিলেট","Sylhet"],
+["43","Bagerhat","বাগেরহাট","Khulna"],["44","Chuadanga","চুয়াডাঙ্গা","Khulna"],["45","Jashore","যশোর","Khulna"],["46","Jhenaidah","ঝিনাইদহ","Khulna"],["47","Khulna","খুলনা","Khulna"],["48","Kushtia","কুষ্টিয়া","Khulna"],["49","Magura","মাগুরা","Khulna"],["50","Meherpur","মেহেরপুর","Khulna"],["51","Narail","নড়াইল","Khulna"],["52","Satkhira","সাতক্ষীরা","Khulna"],
+["53","Jamalpur","জামালপুর","Mymensingh"],["54","Mymensingh","ময়মনসিংহ","Mymensingh"],["55","Netrokona","নেত্রকোণা","Mymensingh"],["56","Sherpur","শেরপুর","Mymensingh"],
+["57","Dinajpur","দিনাজপুর","Rangpur"],["58","Gaibandha","গাইবান্ধা","Rangpur"],["59","Kurigram","কুড়িগ্রাম","Rangpur"],["60","Lalmonirhat","লালমনিরহাট","Rangpur"],["61","Nilphamari","নীলফামারী","Rangpur"],["62","Panchagarh","পঞ্চগড়","Rangpur"],["63","Rangpur","রংপুর","Rangpur"],["64","Thakurgaon","ঠাকুরগাঁও","Rangpur"]
+].map(d=>({id:d[0],name:d[1],bn:d[2],division:d[3],slug:d[1].toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}));
+
+window.GEOJSON_URL = "https://raw.githubusercontent.com/ifahimreza/bangladesh-geojson/main/src/data/bangladesh.geojson";
+window.STORAGE_KEY = "ourTravelDiary.v3";
+window.defaultTrips = [];

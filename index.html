@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Our Travel Diary — Bangladesh</title>
+<meta name="description" content="A private travel diary of journeys across Bangladesh.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><span class="brand-mark">✦</span><span>Our Travel Diary</span></a>
+  <nav><a class="active" href="index.html">Map</a><a href="add-trip.html">Add New Trip</a><a href="#memories">Memories</a></nav>
+</header>
+
+<main>
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">BANGLADESH • OUR JOURNEY</p>
+    <h1>Every district,<br><em>a story to remember.</em></h1>
+    <p class="lead">Explore the places we have visited, discover our photographs and read the little stories behind each journey.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#map">Explore the map <span>↓</span></a>
+      <a class="btn ghost" href="add-trip.html">＋ Add a trip</a>
+    </div>
+  </div>
+  <div class="stats-card">
+    <div><strong id="visitedCount">0</strong><span>Districts visited</span></div>
+    <div><strong id="tripCount">0</strong><span>Trips recorded</span></div>
+    <div><strong>64</strong><span>Districts to explore</span></div>
+  </div>
+</section>
+
+<section class="map-section" id="map">
+  <div class="section-head">
+    <div><p class="eyebrow">THE 64 DISTRICTS</p><h2>Choose a place on the map</h2></div>
+    <div class="map-tools">
+      <label class="search"><span>⌕</span><input id="districtSearch" placeholder="Search district / জেলা…" autocomplete="off"></label>
+      <button id="resetMap" class="icon-btn" title="Reset map">↺</button>
+    </div>
+  </div>
+  <div class="map-shell">
+    <div id="mapLoading" class="map-loading"><div class="spinner"></div><p>Drawing Bangladesh…</p></div>
+    <svg id="bdMap" viewBox="0 0 700 800" aria-label="Interactive map of Bangladesh"></svg>
+    <div id="tooltip" class="map-tooltip"></div>
+    <div class="map-legend">
+      <span><i class="swatch visited"></i> Visited</span>
+      <span><i class="swatch unvisited"></i> Not visited</span>
+    </div>
+  </div>
+  <p class="map-note">Click any district. Visited districts are highlighted automatically from your saved trips.</p>
+</section>
+
+<section class="memories" id="memories">
+  <div class="section-head">
+    <div><p class="eyebrow">FROM OUR JOURNAL</p><h2>Latest memories</h2></div>
+    <a class="text-link" href="add-trip.html">Add another memory →</a>
+  </div>
+  <div id="latestTrips" class="trip-grid"></div>
+  <div id="emptyTrips" class="empty-state hidden">
+    <div class="empty-icon">📷</div><h3>Your first memory is waiting.</h3><p>Use “Add New Trip” to save a district, story and photographs in this browser.</p><a class="btn primary" href="add-trip.html">Add your first trip</a>
+  </div>
+</section>
+</main>
+
+<footer><div><span class="brand-mark">✦</span> Our Travel Diary</div><p>Made for private memories • Bangladesh</p></footer>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
